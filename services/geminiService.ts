@@ -1,8 +1,13 @@
-import { GoogleGenAI, SchemaType } from "@google/generative-ai";
+import { GoogleGenerativeAI, SchemaType } from "@google/generative-ai";
 import { UnitContent, UnitDefinition } from "../types";
 
 const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
-const genAI = new GoogleGenAI(apiKey);
+
+if (!apiKey) {
+  throw new Error("API Key is missing. Please check your environment configuration.");
+}
+
+const genAI = new GoogleGenerativeAI(apiKey);
 
 const UNIT_SCHEMA = {
   type: SchemaType.OBJECT,
@@ -20,9 +25,9 @@ const UNIT_SCHEMA = {
           french: { type: SchemaType.STRING },
           english: { type: SchemaType.STRING },
           pronunciation: { type: SchemaType.STRING },
-          example: { type: SchemaType.STRING }
-        }
-      }
+          example: { type: SchemaType.STRING },
+        },
+      },
     },
     grammar: {
       type: SchemaType.ARRAY,
@@ -37,12 +42,12 @@ const UNIT_SCHEMA = {
               type: SchemaType.OBJECT,
               properties: {
                 french: { type: SchemaType.STRING },
-                english: { type: SchemaType.STRING }
-              }
-            }
-          }
-        }
-      }
+                english: { type: SchemaType.STRING },
+              },
+            },
+          },
+        },
+      },
     },
     dialogue: {
       type: SchemaType.ARRAY,
@@ -51,9 +56,9 @@ const UNIT_SCHEMA = {
         properties: {
           speaker: { type: SchemaType.STRING },
           text: { type: SchemaType.STRING },
-          translation: { type: SchemaType.STRING }
-        }
-      }
+          translation: { type: SchemaType.STRING },
+        },
+      },
     },
     exercises: {
       type: SchemaType.ARRAY,
@@ -69,22 +74,20 @@ const UNIT_SCHEMA = {
               properties: {
                 question: { type: SchemaType.STRING },
                 options: { type: SchemaType.ARRAY, items: { type: SchemaType.STRING } },
-                answer: { type: SchemaType.STRING }
-              }
-            }
-          }
-        }
-      }
-    }
+                answer: { type: SchemaType.STRING },
+              },
+            },
+          },
+        },
+      },
+    },
   },
-  required: ["title", "vocabulary", "grammar", "dialogue", "exercises"]
-};
+  required: ["title", "vocabulary", "grammar", "dialogue", "exercises"],
+} as const;
 
-export const generateUnitContent = async (unitDef: UnitDefinition): Promise<UnitContent> => {
-  if (!apiKey) {
-    throw new Error("API Key is missing. Please check your environment configuration.");
-  }
-
+export const generateUnitContent = async (
+  unitDef: UnitDefinition
+): Promise<UnitContent> => {
   const model = genAI.getGenerativeModel({
     model: "gemini-2.0-flash",
     generationConfig: {
