@@ -1,0 +1,5 @@
+{
+  "name": "Le Français Progressif - AI Textbook Generator",
+  "description": "A sophisticated React application that uses Gemini 3 Pro to generate a complete, structured A1-A2 French language textbook. Features interactive unit generation, print-to-PDF capabilities, and a professional academic layout similar to MacMillan/NatGeo standards.",
+  "requestFramePermissions": []
+}

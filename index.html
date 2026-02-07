@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Le Français Progressif Generator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Merriweather:ital,wght@0,300;0,400;0,700;1,400&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ['Inter', 'sans-serif'],
+              serif: ['Merriweather', 'serif'],
+            },
+            colors: {
+              'french-blue': '#0055A4',
+              'french-red': '#EF4135',
+              'paper': '#fdfbf7',
+            }
+          }
+        }
+      }
+    </script>
+    <style>
+      @media print {
+        @page { margin: 1cm; size: A4; }
+        html, body {
+          height: auto !important;
+          overflow: visible !important;
+          background: white !important;
+        }
+        body { -webkit-print-color-adjust: exact; }
+        
+        /* Ocultar elementos marcados como no-print */
+        .no-print { display: none !important; }
+        
+        /* Asegurar saltos de página limpios */
+        .page-break { page-break-before: always; }
+        
+        /* Resetear contenedores de React para que no corten el contenido */
+        #root, main {
+          height: auto !important;
+          overflow: visible !important;
+          display: block !important;
+          position: relative !important;
+        }
+      }
+    </style>
+  <script type="importmap">
+{
+  "imports": {
+    "react": "https://esm.sh/react@^19.2.4",
+    "react/": "https://esm.sh/react@^19.2.4/",
+    "@google/genai": "https://esm.sh/@google/genai@^1.39.0",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.4/",
+    "lucide-react": "https://esm.sh/lucide-react@^0.563.0"
+  }
+}
+</script>
+<link rel="stylesheet" href="/index.css">
+</head>
+  <body class="bg-gray-100 text-slate-800">
+    <div id="root"></div>
+  <script type="module" src="/index.tsx"></script>
+</body>
+</html>
