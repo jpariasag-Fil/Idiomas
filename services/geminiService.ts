@@ -1,45 +1,43 @@
-import { GoogleGenAI, Type } from "@google/genai";
-import { UnitContent, UnitDefinition, UnitLevel } from "../types";
+import { GoogleGenAI, SchemaType } from "@google/generative-ai";
+import { UnitContent, UnitDefinition } from "../types";
 
-// Initialize Gemini Client
-// IMPORTANT: Access API key via process.env.API_KEY as per instructions
-const apiKey = process.env.API_KEY || ''; 
-const ai = new GoogleGenAI({ apiKey });
+const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+const genAI = new GoogleGenAI(apiKey);
 
 const UNIT_SCHEMA = {
-  type: Type.OBJECT,
+  type: SchemaType.OBJECT,
   properties: {
-    title: { type: Type.STRING, description: "The French title of the unit" },
-    subtitle: { type: Type.STRING, description: "English subtitle explaining the focus" },
-    level: { type: Type.STRING, enum: ["A1", "A2"] },
-    introduction: { type: Type.STRING, description: "A welcoming introduction paragraph in English/French mix explaining what will be learned." },
-    culturalNote: { type: Type.STRING, description: "A 'Le Saviez-vous?' style cultural fact related to the topic." },
+    title: { type: SchemaType.STRING },
+    subtitle: { type: SchemaType.STRING },
+    level: { type: SchemaType.STRING },
+    introduction: { type: SchemaType.STRING },
+    culturalNote: { type: SchemaType.STRING },
     vocabulary: {
-      type: Type.ARRAY,
+      type: SchemaType.ARRAY,
       items: {
-        type: Type.OBJECT,
+        type: SchemaType.OBJECT,
         properties: {
-          french: { type: Type.STRING },
-          english: { type: Type.STRING },
-          pronunciation: { type: Type.STRING, description: "IPA or simple phonetic guide" },
-          example: { type: Type.STRING, description: "A short sentence using the word" }
+          french: { type: SchemaType.STRING },
+          english: { type: SchemaType.STRING },
+          pronunciation: { type: SchemaType.STRING },
+          example: { type: SchemaType.STRING }
         }
       }
     },
     grammar: {
-      type: Type.ARRAY,
+      type: SchemaType.ARRAY,
       items: {
-        type: Type.OBJECT,
+        type: SchemaType.OBJECT,
         properties: {
-          title: { type: Type.STRING },
-          explanation: { type: Type.STRING, description: "Clear explanation in English about the French grammar rule." },
+          title: { type: SchemaType.STRING },
+          explanation: { type: SchemaType.STRING },
           examples: {
-            type: Type.ARRAY,
+            type: SchemaType.ARRAY,
             items: {
-              type: Type.OBJECT,
+              type: SchemaType.OBJECT,
               properties: {
-                french: { type: Type.STRING },
-                english: { type: Type.STRING }
+                french: { type: SchemaType.STRING },
+                english: { type: SchemaType.STRING }
               }
             }
           }
@@ -47,31 +45,31 @@ const UNIT_SCHEMA = {
       }
     },
     dialogue: {
-      type: Type.ARRAY,
+      type: SchemaType.ARRAY,
       items: {
-        type: Type.OBJECT,
+        type: SchemaType.OBJECT,
         properties: {
-          speaker: { type: Type.STRING },
-          text: { type: Type.STRING, description: "French text" },
-          translation: { type: Type.STRING, description: "English translation" }
+          speaker: { type: SchemaType.STRING },
+          text: { type: SchemaType.STRING },
+          translation: { type: SchemaType.STRING }
         }
       }
     },
     exercises: {
-      type: Type.ARRAY,
+      type: SchemaType.ARRAY,
       items: {
-        type: Type.OBJECT,
+        type: SchemaType.OBJECT,
         properties: {
-          instruction: { type: Type.STRING },
-          type: { type: Type.STRING, enum: ["fill-in-blank", "multiple-choice", "translation"] },
+          instruction: { type: SchemaType.STRING },
+          type: { type: SchemaType.STRING },
           questions: {
-            type: Type.ARRAY,
+            type: SchemaType.ARRAY,
             items: {
-              type: Type.OBJECT,
+              type: SchemaType.OBJECT,
               properties: {
-                question: { type: Type.STRING },
-                options: { type: Type.ARRAY, items: { type: Type.STRING } },
-                answer: { type: Type.STRING }
+                question: { type: SchemaType.STRING },
+                options: { type: SchemaType.ARRAY, items: { type: SchemaType.STRING } },
+                answer: { type: SchemaType.STRING }
               }
             }
           }
@@ -87,45 +85,21 @@ export const generateUnitContent = async (unitDef: UnitDefinition): Promise<Unit
     throw new Error("API Key is missing. Please check your environment configuration.");
   }
 
-  const modelId = "gemini-3-pro-preview"; 
+  const model = genAI.getGenerativeModel({
+    model: "gemini-2.0-flash",
+    generationConfig: {
+      responseMimeType: "application/json",
+      responseSchema: UNIT_SCHEMA,
+    },
+  });
 
-  const prompt = `
-    You are a professional author of French language learning textbooks (similar to MacMillan or National Geographic Learning).
-    Create a complete textbook unit for Level ${unitDef.level}.
-    
-    Topic: ${unitDef.title}
-    Focus Areas: ${unitDef.topics}
-    
-    Requirements:
-    1. Pedagogical Approach: Start with vocabulary, move to grammar, then a dialogue, then exercises.
-    2. Tone: Engaging, academic yet accessible.
-    3. Content:
-       - 8-12 Vocabulary items.
-       - 1-2 Key Grammar points explained clearly with examples.
-       - A realistic dialogue (6-10 lines) relevant to the topic.
-       - 3 Distinct exercises (one fill-in-blank, one multiple choice, one translation).
-       - A short cultural note about France or Francophone countries related to the topic.
-  `;
+  const prompt = `Create a French unit for level ${unitDef.level}. Topic: ${unitDef.title}. Topics to cover: ${unitDef.topics}`;
 
   try {
-    const response = await ai.models.generateContent({
-      model: modelId,
-      contents: prompt,
-      config: {
-        responseMimeType: "application/json",
-        responseSchema: UNIT_SCHEMA,
-        thinkingConfig: { thinkingBudget: 4096 } // Use thinking for better pedagogical structuring
-      }
-    });
-
-    const textResponse = response.text;
-    if (!textResponse) {
-      throw new Error("No content generated from Gemini.");
-    }
-
-    const data = JSON.parse(textResponse) as UnitContent;
-    return data;
-
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    const text = response.text();
+    return JSON.parse(text) as UnitContent;
   } catch (error) {
     console.error("Error generating unit:", error);
     throw error;
